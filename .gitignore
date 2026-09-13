@@ -1,0 +1,49 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/main
+/app
+/bin/
+/dist/
+
+# Go build cache / test artifacts
+*.test
+*.out
+/vendor/
+coverage*.out
+coverage*.html
+cpu.out
+mem.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# Air live reload (see .air.toml: tmp_dir = "tmp", bin = "./tmp/main")
+/tmp/
+tmp/build-errors.log
+
+# Env / secrets - config.toml contains DB URL + jwt_secret
+.env
+.env.*
+!.env.example
+config.local.toml
+*.local.toml
+
+# IDE / editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+# graphify generated output
+graphify-out/

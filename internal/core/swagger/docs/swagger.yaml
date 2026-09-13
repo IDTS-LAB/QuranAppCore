@@ -1,0 +1,336 @@
+basePath: /api
+definitions:
+  application.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  application.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        description: |-
+          ExpiresAt is when the access token stops being valid. Clients should
+          use the refresh token to get a new pair before then.
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  application.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  application.MeResponse:
+    properties:
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      id:
+        type: integer
+    type: object
+  application.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  application.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  application.RegisterRequest:
+    properties:
+      display_name:
+        example: Aisyah
+        maxLength: 50
+        minLength: 2
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: s3cret-pass
+        minLength: 8
+        type: string
+    required:
+    - display_name
+    - email
+    - password
+    type: object
+  application.VerifyEmailRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  http.RegisterError:
+    properties:
+      code:
+        example: EMAIL_TAKEN
+        type: string
+      details: {}
+    type: object
+  http.RegisterResponse:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/http.RegisterError'
+      message:
+        example: user register successful
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  route.HealthzError:
+    properties:
+      code:
+        example: SERVICE_UNAVAILABLE
+        type: string
+      details: {}
+    type: object
+  route.HealthzResponse:
+    properties:
+      data:
+        additionalProperties:
+          type: string
+        type: object
+      error:
+        $ref: '#/definitions/route.HealthzError'
+      message:
+        example: ok
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: Core API for the Quran app.
+  title: Quran App API
+  version: "1.0"
+paths:
+  /healthz:
+    get:
+      description: Returns 200 when the API is up and Postgres is reachable, 503 otherwise.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/route.HealthzResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/route.HealthzResponse'
+      summary: Liveness + DB readiness probe
+      tags:
+      - Healthz
+  /v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user with email and password, returns access and
+        refresh tokens.
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/application.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/application.LoginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/application.LoginResponse'
+      summary: User login
+      tags:
+      - Authentication
+  /v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revokes the authenticated user's refresh token, invalidating the
+        session.
+      parameters:
+      - description: Logout payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - Authentication
+  /v1/auth/me:
+    get:
+      description: Returns the authenticated user's profile information.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/application.MeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/application.MeResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - Authentication
+  /v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchanges a valid refresh token for a new access and refresh token
+        pair.
+      parameters:
+      - description: Refresh token payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/application.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/application.RefreshTokenResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/application.RefreshTokenResponse'
+      summary: Refresh access token
+      tags:
+      - Authentication
+  /v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a user account with email, password and display name.
+      parameters:
+      - description: Registration payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.RegisterResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/http.RegisterResponse'
+      summary: Register a new user
+      tags:
+      - Authentication
+  /v1/auth/verify-email:
+    post:
+      consumes:
+      - application/json
+      description: Verifies user's email address using the token sent via email.
+      parameters:
+      - description: Email verification payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/application.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Verify email address
+      tags:
+      - Authentication
+securityDefinitions:
+  BearerAuth:
+    description: Enter "Bearer &lt;access-token&gt;" (get one from the login endpoint).
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

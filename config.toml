@@ -1,0 +1,34 @@
+# Development config — pairs with docker-compose.dev.yml
+# Run infra with: docker compose -f docker-compose.dev.yml up -d
+# App runs locally (air / go run ./cmd/app), so DB host stays localhost.
+[app]
+port = "8080"
+env = "development"
+
+[database]
+url = "host=localhost user=gorm password=gorm dbname=gorm port=5432 sslmode=disable"
+max_open_conns = 25
+max_idle_conns = 5
+
+# JWT settings. In production override with env vars instead of editing this file:
+# JWT_SECRET (min 32 random chars), JWT_ISSUER, JWT_ACCESS_TTL, JWT_REFRESH_TTL.
+[jwt]
+secret = "dev-only-secret-change-me"
+issuer = "quran-app"
+access_ttl = "15m"
+refresh_ttl = "168h"
+
+# S3-compatible object storage. Defaults target the dev MinIO from
+# docker-compose.dev.yml (API http://localhost:9000, console http://localhost:9001).
+# Against real AWS S3, set endpoint to "" (SDK default), region to your bucket
+# region, and credentials to an IAM key pair. In production override with env
+# vars instead of editing this file: S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY,
+# S3_SECRET_KEY, S3_BUCKET, S3_USE_PATH_STYLE, S3_PRESIGN_TTL.
+[s3]
+endpoint = "http://localhost:9000"
+region = "us-east-1"
+access_key = "minioadmin"
+secret_key = "minioadmin"
+bucket = "quran-dev"
+use_path_style = true
+presign_ttl = "15m"
